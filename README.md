@@ -176,6 +176,10 @@ static JavaScript file. Existing saved connection settings override its default.
 
 ### Troubleshooting and updates
 
+- **Found app.py but no top-level app:** Vercel is detecting the backend as Flask.
+  Set Vercel's Root Directory to `frontend` and Framework Preset to `Other`, then
+  redeploy the latest commit. The included `frontend/vercel.json` explicitly
+  configures static hosting. The Python backend belongs on Render using Docker.
 - **Vercel 404:** confirm Root Directory is `frontend`, Framework is `Other`,
   Output Directory is `.`, and build/install commands are empty.
 - **Render COPY/build errors:** keep Root Directory blank, Dockerfile Path
