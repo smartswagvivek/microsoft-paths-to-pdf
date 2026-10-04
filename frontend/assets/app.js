@@ -15,15 +15,18 @@ function stored(area, key, value) {
   return null;
 }
 const localHost = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
-let apiBase = stored("localStorage", "learnfolio-backend") || window.LEARNFOLIO_CONFIG?.apiBase || (localHost ? location.origin : "");
-let accessKey = stored("sessionStorage", `learnfolio-key:${apiBase}`) || "";
-let previewObject = null, previewRequest = 0, connectionVersion = 0;
+const apiBase = location.origin;
+let connected = false;
+let previewObject = null, previewRequest = 0;
 const fileObjects = new Map();
 function historyKey() { return `learnfolio-job:${apiBase}`; }
 // Remove selection IDs left by older versions; lesson content is never stored here.
 try {
   for (const key of Object.keys(localStorage)) {
-    if (key.startsWith("learnfolio-job:") || key === "learn-pdf-job") localStorage.removeItem(key);
+    if (key.startsWith("learnfolio-job:") || key === "learn-pdf-job" || key === "learnfolio-backend") localStorage.removeItem(key);
+  }
+  for (const key of Object.keys(sessionStorage)) {
+    if (key.startsWith("learnfolio-key:")) sessionStorage.removeItem(key);
   }
 } catch { /* Storage can be disabled. */ }
 function clearSelection() {
@@ -53,33 +56,20 @@ function assertAvailable(id) {
     throw new Error("This export expired or is no longer selected.");
   }
 }
-function validateBackend(value) {
-  const url = new URL(value);
-  const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback && location.protocol !== "https:")) {
-    throw new Error("Use an HTTPS backend URL (HTTP is allowed only for local development).");
-  }
-  if (url.username || url.password || url.search || url.hash || url.pathname !== "/") {
-    throw new Error("Enter only the backend origin, without a path, password, or query.");
-  }
-  return url.origin;
-}
-async function request(path, options = {}, base = apiBase, key = accessKey) {
-  if (!base) throw new Error("Add your backend URL in Connection settings first.");
+async function request(path, options = {}) {
   let response;
   try {
-    response = await fetch(base + path, {
-      ...options,
-      signal: AbortSignal.timeout(45000),
-      headers: { ...(options.body ? { "Content-Type": "application/json" } : {}),
-        ...(key ? { Authorization: `Bearer ${key}` } : {}), ...options.headers }
+    const url = localHost ? path : `/api/gateway?path=${encodeURIComponent(path)}`;
+    response = await fetch(url, {
+      ...options, signal: AbortSignal.timeout(45000),
+      headers: { ...(options.body ? { "Content-Type": "application/json" } : {}), ...options.headers }
     });
   } catch {
-    throw new Error("Cannot reach the backend. Check its URL, availability, and allowed website origin.");
+    throw new Error("The export service is waking up or temporarily unavailable. Retrying shortly.");
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    const error = new Error(data.error || `Backend request failed (${response.status}).`);
+    const error = new Error(data.error || `Export request failed (${response.status}).`);
     error.status = response.status;
     throw error;
   }
@@ -88,7 +78,7 @@ async function request(path, options = {}, base = apiBase, key = accessKey) {
 async function api(path, options = {}) {
   const response = await request(path, options);
   if (!response.headers.get("Content-Type")?.includes("application/json")) {
-    throw new Error("This URL is not a Learnfolio backend. Check Connection settings.");
+    throw new Error("The export service is temporarily unavailable.");
   }
   return response.json();
 }
@@ -234,12 +224,11 @@ function renderHistory(history) {
 }
 async function refreshState() {
   clearTimeout(stateTimer);
-  const version = connectionVersion;
   const data = await api("/api/state");
-  if (version !== connectionVersion) return null;
   if (data.server_time) serverOffset = Date.parse(data.server_time) - Date.now();
   activeJob = data.active;
-  setBusy(!!activeJob);
+  setBusy(!!activeJob || data.busy);
+  if (data.busy && !activeJob) $("create-button").firstElementChild.textContent = "Another export is running. Please wait...";
   libraryHistory = data.history;
   expireLibrary();
   queueStateRefresh(activeJob && activeJob !== selectedJob ? 2000 : 30000);
@@ -247,9 +236,8 @@ async function refreshState() {
 }
 function queueStateRefresh(delay) {
   clearTimeout(stateTimer);
-  const version = connectionVersion;
   stateTimer = setTimeout(() => refreshState().catch(() => {
-    if (version === connectionVersion) queueStateRefresh(30000);
+    queueStateRefresh(30000);
   }), delay);
 }
 function renderJob(job) {
@@ -363,56 +351,12 @@ $("export-form").addEventListener("submit", async event => {
     activeJob = result.id; await selectJob(result.id, true); $("job-heading").focus({preventScroll:true});
   } catch (error) { showError(error.message); setBusy(!!activeJob); }
 });
-$("backend-url").value = apiBase;
-$("access-key").value = accessKey;
-$("connection-form").addEventListener("submit", async event => {
-  event.preventDefault();
-  $("connect-button").disabled = true;
-  $("connection-message").textContent = "Connecting...";
-  try {
-    const base = validateBackend($("backend-url").value.trim());
-    const key = $("access-key").value.trim();
-    const response = await request("/api/state", {}, base, key);
-    const data = await response.json();
-    if (!Array.isArray(data.history)) throw new Error("This is not a Learnfolio backend.");
-    stored("localStorage", "learnfolio-backend", base);
-    stored("sessionStorage", `learnfolio-key:${apiBase}`, null);
-    stored("sessionStorage", `learnfolio-key:${base}`, key);
-    connectionVersion++;
-    clearSelection(); clearTimeout(expiryTimer); libraryHistory = [];
-    apiBase = base; accessKey = key;
-    clearTimeout(pollTimer); clearTimeout(stateTimer);
-    selectedJob = null; activeJob = null;
-    $("job-panel").hidden = true; resetPreview();
-    if (await initialize()) $("connection-message").textContent = "Connection saved.";
-  } catch (error) { $("connection-message").textContent = error.message; }
-  finally { $("connect-button").disabled = false; }
-});
-$("disconnect-button").addEventListener("click", () => {
-  connectionVersion++;
-  clearSelection(); clearTimeout(expiryTimer); libraryHistory = [];
-  stored("sessionStorage", `learnfolio-key:${apiBase}`, null);
-  accessKey = "";
-  $("access-key").value = "";
-  clearTimeout(pollTimer); clearTimeout(stateTimer);
-  selectedJob = null; activeJob = null;
-  resetPreview(); $("job-panel").hidden = true;
-  renderHistory([]); setBusy(true);
-  $("create-button").firstElementChild.textContent = "Connect to create a PDF";
-  $("connection-badge").textContent = "Connect backend";
-  $("connection-status").textContent = "Disconnected";
-  $("connection-message").textContent = "Access key cleared from this tab. Enter your settings to reconnect.";
-  $("connection").open = true;
-});
 async function initialize() {
-  const version = connectionVersion;
   try {
-    apiBase = validateBackend(apiBase);
     const state = await refreshState();
-    if (!state || version !== connectionVersion) return false;
-    $("connection-badge").textContent = "Backend connected";
-    $("connection-status").textContent = "Connected";
-    $("connection").open = false;
+    if (!state) return false;
+    connected = true;
+    $("connection-badge").textContent = "Ready to export";
     showError("");
     let saved = null;
     try { saved = JSON.parse(stored("sessionStorage", historyKey()) || "null"); } catch { /* Ignore old selections. */ }
@@ -421,13 +365,13 @@ async function initialize() {
     if (id) await selectJob(id);
     return true;
   } catch (error) {
-    if (version !== connectionVersion) return false;
     setBusy(true);
-    $("create-button").firstElementChild.textContent = "Connect to create a PDF";
-    $("connection").open = true;
-    $("connection-badge").textContent = "Connect backend";
-    $("connection-status").textContent = "Not connected";
-    $("connection-message").textContent = apiBase ? error.message : "Enter your deployed backend URL and access key to start exporting.";
+    connected = false;
+    $("create-button").firstElementChild.textContent = "Connecting to export service...";
+    $("connection-badge").textContent = "Reconnecting...";
+    showError(error.message);
+    clearTimeout(stateTimer);
+    stateTimer = setTimeout(initialize, 10000);
     return false;
   }
 }
@@ -435,7 +379,7 @@ updatePreview();
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     expireLibrary();
-    if ($("connection-status").textContent === "Connected") refreshState().catch(() => {});
+    if (connected) refreshState().catch(() => {});
   }
 });
 initialize();

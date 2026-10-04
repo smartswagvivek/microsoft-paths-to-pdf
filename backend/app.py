@@ -1,5 +1,6 @@
 """Learnfolio API. Run one instance; export jobs and history share one data directory."""
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -7,7 +8,7 @@ import threading
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, g, jsonify, request, send_file
 from werkzeug.exceptions import HTTPException
 
 from jobs import EXPORTS, FILES, ROOT, Jobs, validate
@@ -46,7 +47,13 @@ def create_app():
         if protected and request.path != "/api/health" and key:
             supplied = request.headers.get("Authorization", "")
             if not secrets.compare_digest(supplied.encode(), ("Bearer " + key).encode()):
-                return jsonify(error="Enter the correct backend access key in Connection settings."), 401
+                return jsonify(error="Backend authentication failed."), 401
+            workspace = request.headers.get("X-Workspace-ID", "")
+            if not re.fullmatch(r"[a-f0-9]{32}", workspace):
+                return jsonify(error="A valid workspace is required."), 403
+            g.workspace = workspace
+        else:
+            g.workspace = "local"
         if request.method == "POST" and not key and not origin:
             return jsonify(error="Local exports must be submitted from the Learnfolio website."), 403
 
@@ -61,6 +68,7 @@ def create_app():
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Learnfolio-Isolation"] = "workspace-v1"
         # HTML exports are downloads. Sandbox them if a browser opens one directly.
         if request.path.startswith("/files/"):
             response.headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src data:; font-src data:; style-src 'unsafe-inline'"
@@ -76,12 +84,20 @@ def create_app():
 
     @app.get("/api/state")
     def state():
-        return jsonify(active=jobs.active, history=jobs.history(), server_time=datetime.now(timezone.utc).isoformat())
+        with jobs.lock:
+            history = jobs.history(owner=g.workspace)
+            active = jobs.active if jobs.active and owned_job(jobs.active) else None
+            return jsonify(active=active, busy=bool(jobs.active), history=history,
+                           server_time=datetime.now(timezone.utc).isoformat())
+
+    def owned_job(job_id):
+        job = jobs.snapshot(job_id)
+        return job if job and job.get("owner", "local") == g.workspace else None
 
     @app.post("/api/jobs")
     def start_job():
         try:
-            return jsonify(id=jobs.start(validate(request.get_json()))), 202
+            return jsonify(id=jobs.start(validate(request.get_json()), owner=g.workspace)), 202
         except (ValueError, TypeError) as error:
             return jsonify(error=str(error)), 400
         except RuntimeError as error:
@@ -89,13 +105,13 @@ def create_app():
 
     @app.get("/api/jobs/<job_id>")
     def get_job(job_id):
-        job = jobs.snapshot(job_id)
+        job = owned_job(job_id)
         return (jsonify(job), 200) if job else (jsonify(error="Export not found."), 404)
 
     @app.get("/files/<job_id>/<kind>")
     def download(job_id, kind):
         with jobs.lock:
-            job = jobs.snapshot(job_id)
+            job = owned_job(job_id)
             if kind not in FILES or not job or kind not in job["downloads"]:
                 return jsonify(error="File expired or is not available."), 404
             name, mime = FILES[kind]
@@ -103,7 +119,7 @@ def create_app():
 
     @app.get("/preview/<job_id>/<number>")
     def preview(job_id, number):
-        job = jobs.snapshot(job_id)
+        job = owned_job(job_id)
         if not job or "pdf" not in job["downloads"]:
             return jsonify(error="Preview not available."), 404
         if number != "info" and (not number.isdigit() or not 1 <= int(number) <= 5000):
@@ -111,7 +127,7 @@ def create_app():
         cache = EXPORTS / job_id / ("preview-info.json" if number == "info" else f"preview-{int(number)}.png")
         with preview_lock:
             with jobs.lock:
-                if not jobs.snapshot(job_id):
+                if not owned_job(job_id):
                     return jsonify(error="This export has expired."), 404
                 if cache.exists():
                     return send_file(cache, mimetype="application/json" if number == "info" else "image/png")
@@ -124,7 +140,7 @@ def create_app():
                 except subprocess.TimeoutExpired:
                     return jsonify(error="Preview timed out. Download the PDF to continue reading."), 504
                 with jobs.lock:
-                    if not jobs.snapshot(job_id):
+                    if not owned_job(job_id):
                         return jsonify(error="This export has expired."), 404
                     if result.returncode:
                         return jsonify(error="This page could not be previewed. The PDF download is still available."), 400
@@ -138,7 +154,7 @@ def create_app():
 
     @app.get("/assets/<name>")
     def asset(name):
-        if name not in ("app.js", "app.css", "favicon.svg", "config.js"):
+        if name not in ("app.js", "app.css", "favicon.svg"):
             return jsonify(error="Not found."), 404
         return send_file(ROOT.parent / "frontend" / "assets" / name)
 

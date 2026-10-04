@@ -11,6 +11,8 @@ blue-gray border inset 7 mm from the edge, clear of the text and footer.
 frontend/
   index.html
   assets/             Styles, JavaScript, favicon, Oswald font and its license
+  api/gateway.mjs     Vercel server function for automatic private backend access
+  vercel.json          Vercel deployment settings
 backend/
   app.py              HTTP API and local website server
   jobs.py             Export validation and background jobs
@@ -61,8 +63,9 @@ use a different directory. Local mode binds only to 127.0.0.1 and needs no key.
 
 Repository: https://github.com/smartswagvivek/microsoft-paths-to-pdf
 
-Deploy the frontend first to get the exact origin needed by the backend.
-The website initially opens without a backend connection; this is expected.
+The frontend connects automatically through a small Vercel server function.
+Visitors do not enter a backend URL or access key. Backend credentials are private
+Vercel environment variables; never put them in client-side JavaScript.
 
 ### 1. Frontend on Vercel
 
@@ -79,14 +82,17 @@ The website initially opens without a backend connection; this is expected.
 | Build Command | Override with an empty value (no build) |
 | Output Directory | `.` |
 | Install Command | Override with an empty value (no packages to install) |
-| Environment variables | None required |
+| Environment variables | `BACKEND_API_KEY` (same value as Render `API_KEY`); optional `BACKEND_URL` |
 
 4. Deploy and copy the stable **production** URL from the project Domains page,
    such as `https://your-project.vercel.app`. Do not use a commit-specific preview
    URL in the backend settings.
 
-Only `frontend/` is published. Do not select the repository root or `backend/`.
-There is no npm install or npm build command for this project.
+Only `frontend/` is deployed. Its HTML/CSS/JavaScript stays static; `api/gateway.mjs`
+runs server-side on Vercel using Node built-ins and no third-party packages.
+Do not select the repository root or `backend/`. No npm install/build is required.
+The default backend URL is `https://microsoft-paths-to-pdf.onrender.com`.
+If you deploy elsewhere, set `BACKEND_URL` to its HTTPS origin on Vercel.
 
 ### 2. Backend on Render
 
@@ -141,8 +147,8 @@ No secret belongs in the frontend or repository.
 6. A persistent disk is **not required** for this temporary library. The default
    ephemeral `/data` directory loses exports on restart/redeploy (possibly before
    their one-hour expiry). Avoid provider backups if you require strict deletion
-   of all stored copies. Run only one backend instance; there is one shared library
-   and one active export at a time.
+   of all stored copies. Run only one backend instance; libraries are isolated per
+   visitor, with one active export across the service at a time.
 7. Click **Deploy Web Service**. Wait for the build and health check to succeed,
    then copy its HTTPS URL, for example `https://your-api.onrender.com`.
 8. Open `https://your-api.onrender.com/api/health`. Expect:
@@ -151,28 +157,30 @@ No secret belongs in the frontend or repository.
 {"app":"learnfolio","status":"ok"}
 ```
 
-### 3. Connect the two deployments
+### 3. Enable automatic connection (one-time owner setup)
 
-1. Open the Vercel website and expand **Connection settings**.
-2. Enter the Render HTTPS URL (origin only) in **Backend URL**.
-3. Enter the same `API_KEY` you configured on Render in **Access key**.
-4. Click **Connect**. You should see **Connected** and an enabled export button.
-5. Export a Microsoft Learn module, verify the preview and PDF download, and check
-   the library's automatic-deletion countdown.
+1. On Render, set **API_KEY** to a random secret of at least 32 characters.
+2. In Vercel **Project > Settings > Environment Variables**, set
+   **BACKEND_API_KEY** to that exact same value. Enable it for Production (and
+   Preview only if you intend preview deployments to use this backend).
+3. Optionally set **BACKEND_URL** on Vercel. It already defaults to
+   `https://microsoft-paths-to-pdf.onrender.com`.
+4. Deploy the latest backend on Render, then redeploy the frontend on Vercel so
+   the function receives the environment variables.
+5. Open the website. It connects automatically and shows **Ready to export**.
+   Visitors can paste a Microsoft Learn URL immediately, without setup or login.
 
-The backend URL is saved in local storage. The key stays in session storage for
-that browser tab and is sent in an Authorization header. Disconnect clears it.
-Everyone who has this shared key can access the same temporary library.
+The access key never reaches visitors. The Vercel function forwards only allowed
+export endpoints, streams downloads, and assigns a signed HttpOnly session cookie
+that expires after one hour of inactivity. The backend isolates each visitor's
+library by this session, including previews, status, and downloads. Losing the
+cookie means losing access to that temporary library; it is still deleted on time.
+The existing one-hour export retention and single active worker remain in force.
+Anyone can start exports through the public site; monitor hosting usage accordingly.
 
-To prefill the backend URL for visitors, edit `frontend/assets/config.js`:
-
-```javascript
-window.LEARNFOLIO_CONFIG = { apiBase: "https://your-api.onrender.com" };
-```
-
-Commit and push that change; Vercel redeploys it. **Never put the access key in this
-file.** Vercel environment variables do not automatically populate this plain
-static JavaScript file. Existing saved connection settings override its default.
+For local development, `backend/run.bat` still connects directly on localhost,
+with no Vercel variables needed. There is no connection form and no access key in
+browser storage. The interface retries automatically if Render is waking up.
 
 ### Troubleshooting and updates
 
@@ -184,10 +192,12 @@ static JavaScript file. Existing saved connection settings override its default.
   Output Directory is `.`, and build/install commands are empty.
 - **Render COPY/build errors:** keep Root Directory blank, Dockerfile Path
   `backend/Dockerfile`, and Docker Build Context `.`.
-- **Cannot connect / CORS:** match `ALLOWED_ORIGINS` to the browser's exact origin,
-  including HTTPS. Save Render environment changes and let the service redeploy.
-- **401:** the browser's access key must match Render's `API_KEY`.
-- **Sleeping backend:** open the health URL, wait until it responds, then reconnect.
+- **Service configuration error:** Vercel `BACKEND_API_KEY` must match Render
+  `API_KEY`. Redeploy Vercel after changing environment variables. The gateway
+  calls Render server-to-server, so visitors do not need direct CORS access.
+- **Service updating:** deploy the latest Render commit before the frontend; old
+  backends without per-visitor isolation are intentionally refused.
+- **Sleeping backend:** open the health URL, wait until it responds; the website reconnects automatically.
   Use an always-on instance for reliable background jobs and timed deletion.
 - **Memory errors:** increase the backend instance's memory; Chromium needs more
   than a lightweight API server.
@@ -197,7 +207,7 @@ static JavaScript file. Existing saved connection settings override its default.
 - Push future updates to `main`; enable automatic deployments in both providers.
   Avoid redeploying while an export is running.
 
-The local app and Docker configuration have been prepared, but successful cloud
+The local app, gateway, and Docker configuration have been prepared, but successful cloud
 builds and a live export must still be verified after your deployments complete.
 
 Provider documentation: [Vercel static build configuration](https://vercel.com/docs/builds/configure-a-build),
@@ -237,8 +247,8 @@ available through the backend. Closing the tab does not cancel an export.
 
 Failed lessons prevent PDF creation unless partial export is explicitly enabled.
 Source links and export notes are retained. Interactive labs, videos, and
-sign-in-only material remain online. If connection fails, check the backend URL,
-access key, and exact allowed website origin.
+sign-in-only material remain online. If connection fails, check the backend URL and
+private Vercel/Render environment settings.
 
 Oswald is distributed under the SIL Open Font License; see
 `frontend/assets/fonts/OFL.txt`. Font source:

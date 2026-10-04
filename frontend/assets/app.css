@@ -51,14 +51,6 @@ section[id] { scroll-margin-top: 28px; }
 .local-badge { display: flex; align-items: center; gap: 8px; font-size: 16px; white-space: nowrap; }
 .local-badge i { width: 6px; height: 6px; border-radius: 50%; background: #111; }
 .local-badge { text-decoration: none; }
-.connection { margin-bottom: 24px; }
-.connection>summary { padding: 20px 24px; cursor: pointer; font-size: 16px; font-weight: 400; }
-.connection>summary span { float: right; color: var(--muted); font-size: 16px; font-weight: 400; }
-.connection form { border-top: 1px solid var(--line); }
-.connection-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.connection input { width: 100%; min-height: 46px; padding: 13px 12px; border: 1px solid var(--line); background: #fcfcfa; font-size: 16px; }
-.connection-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.connection #connection-message:empty { display: none; }
 .menu-button { display: none; }
 main { padding: 0 54px; }
 .intro { display: grid; grid-template-columns: 1.28fr 1fr; min-height: 535px; padding: 64px 0 58px; position: relative; gap: 12px; }
@@ -263,9 +255,6 @@ progress::-moz-progress-bar { background: #111; }
   .preview-stage.has-pdf { padding: 25px 40px; }
 }
 @media (max-width: 600px) {
-  .connection-fields { grid-template-columns: 1fr; }
-  .connection>summary { padding: 18px; }
-  .connection>summary span { float: none; display: block; margin-top: 8px; }
   body { padding: 0; background: var(--surface); }
   .site-shell { border: 0; }
   main { padding: 0 22px; }

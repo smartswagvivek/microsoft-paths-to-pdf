@@ -167,13 +167,14 @@ class Jobs:
             job = self.items.get(job_id)
             return json.loads(json.dumps(job)) if job else None
 
-    def history(self):
+    def history(self, owner=None):
         with self.lock:
             self.cleanup()
             return [{k: j.get(k) for k in ("id", "title", "created_at", "expires_at", "status", "summary")}
-                    for j in sorted(self.items.values(), key=lambda j: j["created_at"], reverse=True)[:30]]
+                    for j in sorted((j for j in self.items.values() if owner is None or j.get("owner", "local") == owner),
+                                    key=lambda j: j["created_at"], reverse=True)[:30]]
 
-    def start(self, config):
+    def start(self, config, owner="local"):
         with self.lock:
             if self.active:
                 raise RuntimeError("An export is already running. Wait for it to finish.")
@@ -181,7 +182,7 @@ class Jobs:
             folder = EXPORTS / job_id
             folder.mkdir(parents=True)
             (folder / "job.json").write_text(json.dumps(config), encoding="utf-8")
-            job = {"id": job_id, "title": config["title"] or "Microsoft Learn export",
+            job = {"id": job_id, "owner": owner, "title": config["title"] or "Microsoft Learn export",
                    "created_at": datetime.now(timezone.utc).isoformat(), "status": "running",
                    "progress": 0, "message": "Opening Microsoft Learn…", "logs": [],
                    "summary": {}, "warnings": [], "errors": [], "downloads": [], "error": ""}

@@ -3,5 +3,10 @@
   "framework": null,
   "buildCommand": "",
   "installCommand": "",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "functions": {
+    "api/gateway.mjs": {
+      "maxDuration": 60
+    }
+  }
 }

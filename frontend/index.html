@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/app.css"><script src="./assets/config.js" defer></script><script src="./assets/app.js" defer></script>
+  <link rel="stylesheet" href="./assets/app.css"><script src="./assets/app.js" defer></script>
 </head>
 <body class="onest">
   <a class="skip-link" href="#workspace">Skip to PDF exporter</a>
@@ -15,7 +15,7 @@
   <header class="topbar"><div class="topbar-inner">
     <a class="brand" href="./" aria-label="Learnfolio home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>Learnfolio</span></a>
     <nav class="main-nav" id="main-nav" aria-label="Main navigation"><a href="#workspace">Exporter</a><a href="#how-it-works">How it works</a><a href="#library">Your library</a></nav>
-    <a class="local-badge" href="#connection"><i></i><span id="connection-badge">Connect backend</span></a>
+    <a class="local-badge" href="#workspace"><i></i><span id="connection-badge">Connecting...</span></a>
     <button type="button" class="menu-button" id="menu-button" aria-label="Open navigation" aria-expanded="false" aria-controls="main-nav"><span></span><span></span></button>
   </div></header>
   <main>
@@ -34,18 +34,6 @@
     </section>
     <section class="workspace-section" id="workspace" aria-labelledby="workspace-heading">
       <div class="section-heading"><div><p class="eyebrow">THE EXPORTER</p><h2 id="workspace-heading">Your learning.<br>Your format.</h2></div><p>A link is all you need to get started. <br>We’ll take care of the rest.</p></div>
-    <details class="connection card" id="connection">
-      <summary>Connection settings <span id="connection-status" role="status">Not connected</span></summary>
-      <form id="connection-form">
-        <div class="connection-fields">
-          <div><label for="backend-url">Backend URL</label><input id="backend-url" type="url" required placeholder="https://your-backend.example.com" autocomplete="url" aria-describedby="connection-help"></div>
-          <div><label for="access-key">Access key</label><input id="access-key" type="password" placeholder="Required for a hosted backend" autocomplete="off"></div>
-        </div>
-        <p class="field-help" id="connection-help">Connect the server that creates your PDFs. Its URL is saved on this device; the access key stays only for this browser tab.</p>
-        <div class="connection-actions"><button type="submit" class="primary-button" id="connect-button">Connect</button><button type="button" class="secondary-button" id="disconnect-button">Disconnect</button></div>
-        <p class="field-help" id="connection-message" role="status"></p>
-      </form>
-    </details>
     <div class="workspace">
       <section class="editor card" aria-labelledby="export-heading">
         <div class="card-header"><div><span class="step-number">01</span><h2 id="export-heading">Set up your PDF</h2></div><span class="muted small">YOUR INPUT</span></div>
