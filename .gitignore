@@ -1,0 +1,15 @@
+# Runtime state and local environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+backend/data/
+*.log
+.env
+.env.*
+# Editor and OS metadata
+.vscode/
+.idea/
+.vercel/
+.DS_Store
+Thumbs.db

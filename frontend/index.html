@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Learnfolio — Your learning, offline</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/app.css"><script src="./assets/config.js" defer></script><script src="./assets/app.js" defer></script>
+</head>
+<body class="onest">
+  <a class="skip-link" href="#workspace">Skip to PDF exporter</a>
+  <div class="site-shell">
+  <header class="topbar"><div class="topbar-inner">
+    <a class="brand" href="./" aria-label="Learnfolio home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>Learnfolio</span></a>
+    <nav class="main-nav" id="main-nav" aria-label="Main navigation"><a href="#workspace">Exporter</a><a href="#how-it-works">How it works</a><a href="#library">Your library</a></nav>
+    <a class="local-badge" href="#connection"><i></i><span id="connection-badge">Connect backend</span></a>
+    <button type="button" class="menu-button" id="menu-button" aria-label="Open navigation" aria-expanded="false" aria-controls="main-nav"><span></span><span></span></button>
+  </div></header>
+  <main>
+    <section class="intro" aria-labelledby="hero-heading">
+      <div class="intro-content"><p class="eyebrow">MICROSOFT LEARN. ON YOUR TERMS.</p>
+        <h1 id="hero-heading">Learn online.<br>Keep it offline.<span class="pixel-flower" aria-hidden="true"><i></i><i></i><i></i></span></h1>
+        <p class="intro-copy">A whole learning path. One beautifully simple PDF. <br>Take the lessons with you, wherever you learn best.</p>
+        <div class="hero-actions"><a class="primary-button" href="#workspace">Start an export <span aria-hidden="true">↗</span></a><a class="secondary-button" href="#library">Your library <span aria-hidden="true">↗</span></a></div>
+      </div>
+      <div class="hero-art" aria-hidden="true"><div class="art-backdrop"></div><div class="book-shadow"></div><div class="book-stack"><div class="book-pages"></div><div class="book-cover"><span class="book-title">Your next<br>chapter.</span><span class="book-ribbon"></span></div></div><span class="art-star">✦</span><span class="art-caption">LESS TABS. MORE FOCUS.</span></div>
+    </section>
+    <section class="features" id="how-it-works" aria-label="How it works">
+      <article class="feature-card"><div class="feature-top"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M7 9h14l4 4h16v27H7zM7 16h34M14 24h20M14 30h16"/><path d="m31 5 4 4 8-8"/></svg><span>01 / COLLECT</span></div><h2>Every lesson. In order.</h2><p>Paste a Microsoft Learn link. Bring the modules, lessons, and diagrams together in one place.</p></article>
+      <article class="feature-card"><div class="feature-top"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8 5v38M24 5v38M40 5v38"/><rect x="3" y="12" width="10" height="9" fill="var(--surface)"/><rect x="19" y="28" width="10" height="9" fill="var(--surface)"/><rect x="35" y="9" width="10" height="9" fill="var(--surface)"/></svg><span>02 / MAKE IT YOURS</span></div><h2>A format that fits.</h2><p>Choose your page size, text size, and spacing. Add your own title. Make room for the way you read.</p></article>
+      <article class="feature-card"><div class="feature-top"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M7 5h22l10 10v28H7zM29 5v10h10M23 20v15m-7-7 7 7 7-7"/></svg><span>03 / KEEP</span></div><h2>Good learning travels.</h2><p>Download your PDF and pick up where you left off. Your library keeps exports for 1 hour. Download your copy before it expires.</p></article>
+    </section>
+    <section class="workspace-section" id="workspace" aria-labelledby="workspace-heading">
+      <div class="section-heading"><div><p class="eyebrow">THE EXPORTER</p><h2 id="workspace-heading">Your learning.<br>Your format.</h2></div><p>A link is all you need to get started. <br>We’ll take care of the rest.</p></div>
+    <details class="connection card" id="connection">
+      <summary>Connection settings <span id="connection-status" role="status">Not connected</span></summary>
+      <form id="connection-form">
+        <div class="connection-fields">
+          <div><label for="backend-url">Backend URL</label><input id="backend-url" type="url" required placeholder="https://your-backend.example.com" autocomplete="url" aria-describedby="connection-help"></div>
+          <div><label for="access-key">Access key</label><input id="access-key" type="password" placeholder="Required for a hosted backend" autocomplete="off"></div>
+        </div>
+        <p class="field-help" id="connection-help">Connect the server that creates your PDFs. Its URL is saved on this device; the access key stays only for this browser tab.</p>
+        <div class="connection-actions"><button type="submit" class="primary-button" id="connect-button">Connect</button><button type="button" class="secondary-button" id="disconnect-button">Disconnect</button></div>
+        <p class="field-help" id="connection-message" role="status"></p>
+      </form>
+    </details>
+    <div class="workspace">
+      <section class="editor card" aria-labelledby="export-heading">
+        <div class="card-header"><div><span class="step-number">01</span><h2 id="export-heading">Set up your PDF</h2></div><span class="muted small">YOUR INPUT</span></div>
+        <form id="export-form">
+          <fieldset id="form-fields" disabled>
+            <div class="field-heading"><label for="urls">Learning path or module URL</label><button type="button" class="text-button" id="sample-button">Try an example <span aria-hidden="true">↗</span></button></div>
+            <textarea id="urls" name="urls" rows="3" required placeholder="https://learn.microsoft.com/en-us/training/paths/…" aria-describedby="url-help"></textarea>
+            <p class="field-help" id="url-help">Paste one or more Microsoft Learn URLs, one per line.</p>
+            <label for="title">Document title <span class="optional">Optional</span></label>
+            <input id="title" name="title" type="text" maxlength="500" placeholder="Use the learning path’s title">
+            <div class="section-label"><h3>Make it yours</h3><span>Print-ready by default</span></div>
+            <div class="settings-grid">
+              <div><label for="paper">Paper size</label><select id="paper"><option>A4</option><option>Letter</option></select></div>
+              <div><label for="font">Typeface</label><select id="font"><option selected>Times New Roman</option><option>Arial</option><option>Oswald</option></select></div>
+              <div><label for="font-size">Text size</label><select id="font-size"><option value="10">10 pt</option><option value="11">11 pt</option><option value="12" selected>12 pt</option><option value="13">13 pt</option><option value="14">14 pt</option></select></div>
+              <div><label for="line-height">Line spacing</label><select id="line-height"><option value="1.2">1.2 — Compact</option><option value="1.35">1.35 — Balanced</option><option value="1.5" selected>1.5 — Comfortable</option></select></div>
+            </div>
+            <label class="toggle-row" for="images"><span><strong>Keep images & diagrams</strong><small>Bring the visual explanations with you.</small></span><input type="checkbox" id="images" checked><span class="switch" aria-hidden="true"></span></label>
+            <details class="advanced"><summary>Advanced options <span aria-hidden="true">+</span></summary><div class="advanced-body">
+              <label class="check-row"><input type="checkbox" id="unit-break">Start each lesson on a new page</label>
+              <label class="check-row"><input type="checkbox" id="allow-partial">Allow a clearly marked partial PDF</label>
+              <p class="field-help">Off by default. An unavailable lesson stops the export.</p>
+              <label for="delay">Pause between requests</label><select id="delay"><option value="0.5">0.5 seconds</option><option value="1" selected>1 second</option><option value="2">2 seconds</option><option value="3">3 seconds</option><option value="5">5 seconds</option></select>
+              <label for="selector">Lesson CSS selector override</label><input id="selector" maxlength="500" placeholder="Leave empty for automatic detection">
+            </div></details>
+          </fieldset>
+          <div id="form-error" class="error-message" role="alert" hidden></div>
+          <button class="primary-button create-button" id="create-button" type="submit" disabled><span>Create my PDF</span><span aria-hidden="true">↗</span></button>
+          <p class="privacy-note">Created by your connected backend. No Microsoft sign-in needed.</p>
+        </form>
+      </section>
+      <section class="preview card" aria-labelledby="preview-heading">
+        <div class="card-header"><div><span class="step-number">02</span><h2 id="preview-heading">A look inside</h2></div><span class="preview-tag" id="preview-tag">COVER PREVIEW</span></div>
+        <div class="preview-stage" id="preview-stage">
+          <div class="paper" id="paper-preview">
+            <h3 id="preview-title">Your document title</h3>
+          </div>
+          <div id="pdf-preview" class="pdf-reader" hidden>
+            <div class="reader-toolbar"><button type="button" id="previous-page" aria-label="Previous PDF page">←</button><span id="page-counter" aria-live="polite">Loading preview…</span><button type="button" id="next-page" aria-label="Next PDF page">→</button><a id="open-pdf" target="_blank" rel="noopener">Open PDF ↗</a></div>
+            <img id="pdf-page" alt="Generated PDF page" hidden>
+            <p id="preview-error" class="field-help" role="status" hidden></p>
+          </div>
+        </div>
+        <div class="preview-footer"><span id="preview-settings">A4 <b>·</b> Times New Roman <b>·</b> 12 pt</span><span id="preview-footer-note">Made for reading</span></div>
+      </section>
+    </div>
+    </section>
+    <section class="job card" id="job-panel" aria-labelledby="job-heading" hidden>
+      <div class="job-top"><div><p class="eyebrow" id="job-eyebrow">PUTTING IT ALL TOGETHER</p><h2 id="job-heading" tabindex="-1">Collecting your lessons</h2></div><span class="status-pill" id="job-status">In progress</span></div>
+      <p id="job-message" class="muted" role="status" aria-live="polite"></p>
+      <progress id="job-progress" max="1" value="0" aria-label="Export progress"></progress>
+      <div class="export-steps" aria-hidden="true"><span>01 Discover modules</span><span>02 Collect lessons</span><span>03 Create PDF</span></div>
+      <div class="metrics" id="metrics" hidden></div>
+      <div id="job-error" class="error-message" role="alert" hidden></div>
+      <div id="downloads" class="downloads"></div>
+      <details id="warning-panel" class="warning-panel" hidden><summary id="warning-heading">Export notes</summary><ul id="warnings"></ul></details>
+      <details class="execution"><summary>Full execution log</summary><pre id="execution-log"></pre></details>
+    </section>
+    <section class="history-section" id="library" aria-labelledby="history-heading"><div class="history-heading"><div><p class="eyebrow">KEEP THE GOOD STUFF</p><h2 id="history-heading">Your learning library.</h2></div><span>Auto-deleted after 1 hour <span aria-hidden="true">↙</span></span></div><div id="history" class="history-list"><p class="empty-history">A clean slate. Your completed exports will appear here.</p></div></section>
+    <footer class="page-footer"><div><span class="footer-brand">Learnfolio</span><p>A little less scrolling.<br>A little more understanding.</p></div><p>Public lesson content only. Interactive media stays online.<br>Independent study tool. Not affiliated with Microsoft.</p><a href="#" aria-label="Back to top">Back to top ↑</a></footer>
+  </main>
+  </div>
+</body>
+</html>

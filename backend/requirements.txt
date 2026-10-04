@@ -1,0 +1,5 @@
+beautifulsoup4>=4.12,<5
+playwright>=1.49,<2
+pymupdf>=1.26,<2
+Flask>=3.1,<4
+waitress>=3.0.2,<4
